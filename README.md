@@ -6,7 +6,7 @@ Just run the script with AHK, start Time Clickers, and check the tooltip overlay
 Modifications are encouraged and contributions welcomed. 
 
 ## Features
-- Clicker: Clicks a bunch so you don't have to. Only active when cursor is in the open area on the main attack screen. Allows you to open settings, warp, weapon cubes, etc without worrying about stray clicks. 
+- Clicker: Clicks a bunch so you don't have to. Only active when cursor is in the central open area on the main attack screen. Allows you to open settings, warp, weapon cubes, etc without worrying about stray clicks. 
 - Buy mode: Automatically upgrades weapons and activates skills. 
 - Idle mode: Sets a timer and automatically does a Time Warp at the end. Good for farming Cubes. 
 
@@ -16,3 +16,4 @@ Modifications are encouraged and contributions welcomed.
 - Improve Time Warp purchase logic
 - Improve support for other resolutions
 - Improve detection of current game state and player progress
+- Enable script to work even when TC is not the active window?

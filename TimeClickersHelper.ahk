@@ -1,9 +1,13 @@
 /**
- * Time Clickers AHK Script - v1.3
- * Updated for TCv1.4.0
+ * Time Clickers AHK Script - v1.4.3.0
+ * Updated for TCv1.4.3
  * Based on original script by iChun @ https://gist.github.com/iChun/c636d4feb9c058573175
  * Repository hosted @ https://github.com/wickles/TimeClickersHelper
  */
+ 
+;; This script assumes you are running at 1280x720 resolution. 
+;; May work with taller but same horizontal resolution, but this is not well tested. 
+;; Note time(r)s are measured in milliseconds. 
 
 #SingleInstance Force
 #NoEnv
@@ -17,41 +21,23 @@ global TotalSeconds := 0
 global DoTimeWarp := false
 
 global DoClick := false
+global allowClick := false
 
 global DoBuy := false
 global BuyTimeOffset := 0
-KeyIndex := 0 ; Keys to look through (asdfg)
-DoSkills := false
-global SkillCycle := 60 ; 60 seconds between skill attempts
+global KeyIndex := 0 ; Keys to look through (asdfg)
+global DoSkills := false
+global SkillCycle := 60 ; seconds between skill attempts
 
 global DoIdleMode := false
 global IdleTime := 0
 global IdleCycle := (120 * 60) ; 120 minutes per idle cycle
 
-SetTimer, Tick, 1000
-SetTimer, Click, 25
-SetTimer, Buy, 200
-
-UpdateToolTip()
-{
-	IfWinActive ahk_exe TimeClickers.exe
-	{
-		BuyString := "Buy Mode: " . DoBuy . " | Idle Mode: " . DoIdleMode
-		if(DoIdleMode)
-		{
-			BuyString :=  BuyString . " | Progress: " . IdleTime . "/" . IdleCycle
-		}
-		ClickString := "Click Mode: " . DoClick
-		ToolTip, %BuyString%, 0, 62, 1
-		ToolTip, %ClickString%, 0, 81, 2
-	}
-	else
-	{
-		ToolTip,,,,1
-		ToolTip,,,,2
-	}
-	return
-}
+SetTimer, TC_Ticker, 1000
+SetTimer, TC_Clicker, 25
+SetTimer, TC_Buy, 333
+SetTimer, TC_Tooltip, 100
+SetControlDelay -1
 
 TimeWarp()
 {
@@ -67,8 +53,8 @@ TimeWarp()
 		Loop, 20 ; Buy Click Pistol upgrades
 		{
 			PixelGetColor, PistolUpgrades, 1181, 239, RGB
-			PixelGetColor, TimeWarp, 1183, 317, RGB
-			if(PistolUpgrades != 0x54d116 || TimeWarp == 0xff7b00)
+			PixelGetColor, TW_Color, 1183, 317, RGB
+			if(PistolUpgrades != 0x54d116 || TW_Color == 0xff7b00)
 			{
 				Send, hc
 				Sleep, 50
@@ -98,26 +84,30 @@ TimeWarp()
 	return
 }
 
-Tick:
+TC_Ticker:
 TotalSeconds++
 if(DoIdleMode)
 {
 	IdleTime++
 }
-UpdateToolTip()
+; UpdateToolTip()
 return
 
-Click:
+TC_Clicker:
+MouseGetPos, xPos, yPos, winID
+WinGet, winProcName, ProcessName, winID
+PixelGetColor, LeaderboardButtonCol, 1007, 31, RGB
+allowClick := ((xPos > 330 && xPos < 960 && yPos > 80 && yPos < 650) && (winProcName == TimeClickers.exe) && (LeaderboardButtonCol == 0xB2002A))
 IfWinActive ahk_exe TimeClickers.exe
 {
-	if(!DoTimeWarp && DoClick)
+	if (!DoTimeWarp && DoClick && allowClick)
 	{
 		Click
 	}
 }
 return
 
-Buy:
+TC_Buy:
 IfWinActive ahk_exe TimeClickers.exe
 {
 	if(!DoTimeWarp && DoBuy)
@@ -166,68 +156,30 @@ IfWinActive ahk_exe TimeClickers.exe
 }
 return
 
+TC_ToolTip:
+IfWinActive ahk_exe TimeClickers.exe
+{
+	TooltipString := "Buy Mode   (F1): " . DoBuy . "  |  Idle Mode (F2): " . DoIdleMode
+	if(DoIdleMode)
+	{
+		TooltipString :=  TooltipString . " | Progress: " . IdleTime . "/" . IdleCycle
+	}
+	TooltipString := TooltipString .  "`n" . "Click Mode (F4): " . DoClick . "  |  Active: " . (DoClick && allowClick)
+	ToolTip, %TooltipString%, 0, 62, 1
+	; ToolTip, %BuyString%, 0, 62, 1
+	; ToolTip, %ClickString%, 0, 81, 2
+	
+	;Progress, zh0 fs12, Test test test
+}
+else
+{
+	ToolTip,,,,1
+	ToolTip,,,,2
+}
+return
+
+;; Make all hotkeys defined below context-sensitive (TC window must be active). 
 #IfWinActive ahk_exe TimeClickers.exe
-^z:: ; Toggle Buy
-DoBuy := !DoBuy
-if(DoBuy)
-{
-	BuyTimeOffset := Mod(TotalSeconds, SkillCycle)
-}
-else
-{
-	DoIdleMode := false
-}
-UpdateToolTip()
-return
-
-^x:: ; Toggle Idle Mode
-DoIdleMode := !DoIdleMode
-UpdateToolTip()
-return
-
-+z:: ; Toggle Clicker
-DoClick := !DoClick
-UpdateToolTip()
-return
-
-+^z:: ; Do Time Warp
-TimeWarp()
-return
-
-i:: ; Toggle Idle Mode
-PixelGetColor, RocketColor, 406, 668, RGB
-if(RocketColor == 0xff7c00)
-{
-	Send, qq
-}
-else
-{
-	Send, q
-}
-Sleep, 100
-PixelGetColor, CannonColor, 598, 668, RGB
-if(CannonColor == 0xff7c00)
-{
-	Send, ww
-}
-else
-{
-	Send, w
-}
-Sleep, 100
-PixelGetColor, PistolColor, 911, 668, RGB
-if(PistolColor == 0xff7c00)
-{
-	Send, ee
-}
-else
-{
-	Send, e
-}
-return
-
-z:: ;disable changing promo type
-return
 
 q:: ; toggle weapon but do not remove weapon
 Send, q
@@ -259,11 +211,38 @@ if(IconColor == 0xffffff)
 }
 return
 
-F8::
+F1:: ; Toggle Buy
+DoBuy := !DoBuy
+if(DoBuy)
+{
+	BuyTimeOffset := Mod(TotalSeconds, SkillCycle)
+}
+else
+{
+	DoIdleMode := false
+}
+;UpdateToolTip()
+return
+
+F2:: ; Toggle Idle Mode
+DoIdleMode := !DoIdleMode
+;UpdateToolTip()
+return
+
+F4:: ; Toggle Clicker
+DoClick := !DoClick
+;UpdateToolTip()
+return
+
+F9:: ; Do Time Warp
+TimeWarp()
+return
+
+F5::
 Reload
 return
 #IfWinActive
 
-F6::
+F8::
 ExitApp
 return

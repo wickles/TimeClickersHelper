@@ -17,3 +17,4 @@ Modifications are encouraged and contributions welcomed.
 - Improve support for other resolutions
 - Improve detection of current game state and player progress
 - Enable script to work even when TC is not the active window?
+- Add mouse sweeper and other features, see e.g. https://www.reddit.com/r/TimeClickers/comments/3297ck/scripts/
